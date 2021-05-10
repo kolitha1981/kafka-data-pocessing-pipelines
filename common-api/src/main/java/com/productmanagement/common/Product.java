@@ -2,7 +2,13 @@ package com.productmanagement.common;
 
 import java.util.Date;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@NoArgsConstructor
 public class Product {
 	
 	/** The identification of the product.*/
