@@ -29,8 +29,11 @@ public class KafkaConsumerService {
 		final ObjectMapper objectMapper = new ObjectMapper();
 		try {
 			final Product consumedProduct = objectMapper.readValue(productPayLoad, Product.class);
-			String notoficationMessage = "########Received product with id: " + consumedProduct.getProductId()
-					+ "from partition:" + partition;
+			System.out.println("@@@@ ConsumedProduct :"+ consumedProduct);
+			String notoficationMessage = "########Received product json :"+productPayLoad 
+					+" with id: " + consumedProduct.getProductId()
+					+ "from partition :" + partition;
+			LOGGER.info(notoficationMessage);
 			LOGGER.info(notoficationMessage);
 			this.partitionLatch.countDown();
 		} catch (Exception e) {

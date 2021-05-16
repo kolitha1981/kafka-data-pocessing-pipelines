@@ -66,8 +66,8 @@ public class KafkaProducerServiceImpl implements KafkaProducerService {
 				});
 				publishingStatuses.put(product.getProductId(), PublishingStatus.STATUS_PENDING);
 			} catch (Exception e) {
-				LOGGER.info("@@@@@@Error when processing student message:" + e.getMessage());
-				publishingStatuses.put(product.getProductId(), PublishingStatus.STATUS_FAILED);
+				LOGGER.info("@@@@@@Error when processing student message:" + e);
+				throw new RuntimeException(e);
 			}
 		});
 		return publishingStatuses;

@@ -1,5 +1,8 @@
 package com.productmanagement.ingress.controller;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
@@ -14,7 +17,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.productmanagement.common.DiscountType;
 import com.productmanagement.common.Product;
+import com.productmanagement.common.ProductType;
+import com.productmanagement.common.PurchasingSource;
 import com.productmanagement.ingress.model.PublishingStatus;
 import com.productmanagement.ingress.service.KafkaProducerService;
 
@@ -25,12 +33,40 @@ public class ProductIngestionController {
 	@Autowired
 	private KafkaProducerService kafkaProducerService;
 
-	@PostMapping(path = "/v1/injestions/product", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	@PostMapping(path = "/v1/injestions/product", consumes = MediaType.APPLICATION_JSON_VALUE, 
+			produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<Map<Long, PublishingStatus>> ingestProduct(@RequestBody List<Product> products) {
 		LOGGER.info("Starting the method ingestProduct() of :" + this.getClass().getName());
 		final Map<Long, PublishingStatus> publishingStatuses = this.kafkaProducerService.pushProductsToTopic(products);
 		return new ResponseEntity<>(publishingStatuses, HttpStatus.OK);
+	}
+	
+	public static void main(String[] args) {
+		final List<Product> products =  new ArrayList<>();
+		for(int j =0; j < 9; j++) {
+			final Product product =  new Product();
+			product.setProductId(Long.valueOf(j+1));
+			final Calendar calendar =  Calendar.getInstance();
+			product.setAddedToInventoryOn(calendar.getTime());
+			product.setBrand("Nike");
+			product.setDescription("Pair of nike shoes.");
+			product.setDiscountType(DiscountType.GOLD);
+			product.setOriginalPrice(10.55);
+			product.setProductName("Nike Air");
+			product.setProductType(ProductType.ACCESSORIS);
+			product.setPurchasedCustomerId(1L);
+			product.setPurchasedPrice(9.55);
+			product.setPurchasingSource(PurchasingSource.ONLINE);
+			product.setStoreId(3L);
+			products.add(product);			
+		}
+		ObjectMapper objectMapper =  new ObjectMapper();
+		try {
+			System.out.println("@@@Json: "+ objectMapper.writeValueAsString(products) );
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
 	}
 
 }
