@@ -5,6 +5,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.GenericRecordBuilder;
+import org.apache.avro.generic.IndexedRecord;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +21,7 @@ import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.productmanagement.common.Product;
+import com.productmanagement.ingress.model.Product;
 import com.productmanagement.ingress.model.PublishingStatus;
 
 @Service
@@ -24,7 +29,7 @@ public class KafkaProducerServiceImpl implements KafkaProducerService {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(KafkaProducerServiceImpl.class);
 	@Autowired
-	private KafkaTemplate<Long, String> kafkaTemplate;
+	private KafkaTemplate<Long, GenericRecord> kafkaTemplate;
 	@Value("${kafka.product.topic.name}")
 	private String topicName;
 	@Value("${kafka.product.error.topic.name}")
@@ -32,6 +37,15 @@ public class KafkaProducerServiceImpl implements KafkaProducerService {
 	@Value("${kafka.product.topic.numberofpartitions}")
 	private int numberOfpartitions;
 	private ObjectMapper objectMapper = new ObjectMapper();
+	//The avro schema for the product
+	private static final String PRODUCT_AVRO_SCHEMA = "{\"type\":\"record\","
+			+"\"name\":\"ProductLog\",\"namespace\":\"productlogs\","
+			+"\"fields\":["
+			+ "{\"name\":\"productId\",\"type\" : \"long\", \"default\" : -1},"
+			+ "{\"name\":\"description\",\"type\" : \"string\", \"default\" : \"NONE\"},"
+			+ "{\"name\":\"productName\",\"type\" : \"string\", \"default\" : \"NONE\"},"
+			+ "{\"name\":\"price\",\"type\" : \"double\", \"default\" : 0.0}"
+			+ "]}";
 
 	@Override
 	public Map<Long, PublishingStatus> pushProductsToTopic(final List<Product> proucts) {
@@ -45,23 +59,29 @@ public class KafkaProducerServiceImpl implements KafkaProducerService {
 			try {
 				final Long partition = product.getProductId() % numberOfpartitions;
 				LOGGER.info("@@@@@ Partition :" + partition + " for product id :" + product.getProductId());
-				final String productJson = objectMapper.writer().writeValueAsString(product);
-				final ListenableFuture<SendResult<Long, String>> future = kafkaTemplate.send(topicName,
-						partition.intValue(), System.currentTimeMillis(), product.getProductId(), productJson);
-				future.addCallback(new ListenableFutureCallback<SendResult<Long, String>>() {
+				Schema.Parser parser = new Schema.Parser();
+				final Schema productAvroSchema = parser.parse(PRODUCT_AVRO_SCHEMA);
+				final GenericRecord genericRecord = new GenericRecordBuilder(productAvroSchema).build();
+				genericRecord.put("productId", product.getProductId());
+				genericRecord.put("description", product.getDescription());
+				genericRecord.put("productName", product.getProductName());
+				genericRecord.put("price", product.getPrice());
+				final ListenableFuture<SendResult<Long, GenericRecord>> future = kafkaTemplate.send(topicName,
+						partition.intValue(), System.currentTimeMillis(), product.getProductId(), genericRecord);
+				future.addCallback(new ListenableFutureCallback<SendResult<Long, GenericRecord>>() {
 					@Override
-					public void onSuccess(SendResult<Long, String> result) {
-						LOGGER.info("@@@@@ Sent message=[" + productJson + "] " + "with offset=["
+					public void onSuccess(SendResult<Long, GenericRecord> result) {
+						LOGGER.info("@@@@@ Sent message=[" + result.getProducerRecord().value() + "] " + "with offset=["
 								+ result.getRecordMetadata().offset() + "]");
 					}
 
 					@Override
 					public void onFailure(Throwable ex) {
-						String errorMessage = "@@@@@ Unable to send message=[" + productJson + "] due to : "
+						String errorMessage = "@@@@@ Unable to send message=[" + product + "] due to : "
 								+ ex.getMessage();
 						LOGGER.info(errorMessage);
 						// Just send the error message to the error topic.
-						kafkaTemplate.send(errorTopicName, productJson);
+						kafkaTemplate.send(errorTopicName, genericRecord);
 					}
 				});
 				publishingStatuses.put(product.getProductId(), PublishingStatus.STATUS_PENDING);

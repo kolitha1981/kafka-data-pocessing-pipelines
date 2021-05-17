@@ -12,8 +12,9 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.productmanagement.common.Product;
+
 import com.productmanagement.ingress.exception.ConsumerProcessingException;
+import com.productmanagement.ingress.model.Product;
 
 @Component
 public class KafkaConsumerService {
@@ -22,7 +23,7 @@ public class KafkaConsumerService {
 
 	private CountDownLatch partitionLatch = new CountDownLatch(2);
 
-	@KafkaListener(topicPartitions = @TopicPartition(topic = "products", partitions = { "0", "1",
+	@KafkaListener(topicPartitions = @TopicPartition(topic = "product_logs", partitions = { "0", "1",
 			"2" }), containerFactory = "kafkaListenerContainerFactory")
 	public void listenToTopic(@Payload String productPayLoad,
 			@Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
