@@ -2,6 +2,7 @@ package com.productmanagement.ingress.service;
 
 import java.util.concurrent.CountDownLatch;
 
+import org.apache.avro.generic.GenericRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -23,18 +24,20 @@ public class KafkaConsumerService {
 
 	private CountDownLatch partitionLatch = new CountDownLatch(2);
 
-	@KafkaListener(topicPartitions = @TopicPartition(topic = "product_logs", partitions = { "0", "1",
+	@KafkaListener(topicPartitions = @TopicPartition(topic = "im_product_logs", partitions = { "0", "1",
 			"2" }), containerFactory = "kafkaListenerContainerFactory")
-	public void listenToTopic(@Payload String productPayLoad,
+	public void listenToTopic(@Payload GenericRecord genericRecord,
 			@Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition) {
-		final ObjectMapper objectMapper = new ObjectMapper();
 		try {
-			final Product consumedProduct = objectMapper.readValue(productPayLoad, Product.class);
-			System.out.println("@@@@ ConsumedProduct :"+ consumedProduct);
-			String notoficationMessage = "########Received product json :"+productPayLoad 
+			final Product consumedProduct =  new Product();
+			consumedProduct.setProductId(Long.valueOf(genericRecord.get("productId").toString()));
+			consumedProduct.setDescription(genericRecord.get("description").toString());
+			consumedProduct.setProductName(genericRecord.get("productName").toString());
+			consumedProduct.setPrice(Double.valueOf(genericRecord.get("price").toString()));
+			LOGGER.info("@@@@ ConsumedProduct :"+ consumedProduct);
+			String notoficationMessage = "########Received product json :"+genericRecord 
 					+" with id: " + consumedProduct.getProductId()
 					+ "from partition :" + partition;
-			LOGGER.info(notoficationMessage);
 			LOGGER.info(notoficationMessage);
 			this.partitionLatch.countDown();
 		} catch (Exception e) {

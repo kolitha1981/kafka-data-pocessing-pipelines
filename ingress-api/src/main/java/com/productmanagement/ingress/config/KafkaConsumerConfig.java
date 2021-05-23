@@ -33,11 +33,9 @@ public class KafkaConsumerConfig {
 		final Map<String, Object> props = new HashMap<>();
 		props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
 		props.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupId);
+		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
 		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
-		// Use Specific Record or else you get Avro GenericRecord.
-		props.put(KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG, "true");
-		// Schema registry location.
 		props.put(KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
 		return new DefaultKafkaConsumerFactory<>(props);
 	}
