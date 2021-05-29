@@ -12,10 +12,18 @@ public class ServiceFactoryImpl implements ServiceFactory {
 		return (T) services.get(serviceClazz);
 	}
 
+	@Override
 	public void registerService(Object serviceObj) {
 		if (!services.containsKey(serviceObj.getClass())) {
 			services.put(serviceObj.getClass(), serviceObj);
 		}
+	}
+
+	@Override
+	public void deregisterServices() {
+		services.forEach((serviceKey, service) -> {
+			serviceKey = null;
+		});
 	}
 
 }
