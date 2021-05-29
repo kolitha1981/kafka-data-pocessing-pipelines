@@ -8,7 +8,7 @@
 	<version>1.0.0</version>
 	<name>product-sink-connector-api</name>
 	<url>http://maven.apache.org</url>
-	
+
 	<properties>
 		<apache.kafka.version>2.7.0</apache.kafka.version>
 		<logback.version>1.2.3</logback.version>
@@ -22,6 +22,11 @@
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<version>1.16.20</version>
+		</dependency>
+		<dependency>
+			<groupId>io.confluent</groupId>
+			<artifactId>kafka-connect-avro-converter</artifactId>
+			<version>5.2.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.kafka</groupId>
@@ -70,7 +75,7 @@
 			<version>${log4j.version}</version>
 		</dependency>
 	</dependencies>
-	
+
 	<build>
 		<plugins>
 			<plugin>
@@ -98,4 +103,11 @@
 			</plugin>
 		</plugins>
 	</build>
+	
+	<repositories>
+		<repository>
+			<url>http://packages.confluent.io/maven/</url>
+			<id>kafka-confuent</id>
+		</repository>
+	</repositories>
 </project>
