@@ -13,10 +13,10 @@ public class ServiceFactoryImpl implements ServiceFactory {
 	}
 
 	@Override
-	public void registerService(Object serviceObj) {
-		if (!services.containsKey(serviceObj.getClass())) {
-			services.put(serviceObj.getClass(), serviceObj);
-		}
+	public void registerService(Class<?> serviceInterface, Object serviceObj) {
+		services.computeIfAbsent(serviceInterface, s -> {
+			return serviceObj;
+		});
 	}
 
 	@Override

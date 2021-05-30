@@ -25,7 +25,7 @@ public class ProductServiceImpl implements ProductService {
 	public Product save(Product product) {
 		try(final Connection connection  =  this.connectionService.getConnection();
 			final PreparedStatement preparedStatement = connection
-						.prepareStatement("INSERT INTO PRODUCT (PRODUCT_NAME,DESCRIPTION,PRICE) VALUES(?,?,?)", 
+						.prepareStatement("INSERT INTO IM_PRODUCT_LOGS.PRODUCT (PRODUCT_NAME,DESCRIPTION,PRICE) VALUES(?,?,?)", 
 						Statement.RETURN_GENERATED_KEYS)) {
 			preparedStatement.setString(1, product.getProductName());
 			preparedStatement.setString(2, product.getDescription());
@@ -33,7 +33,10 @@ public class ProductServiceImpl implements ProductService {
 			int numberOfRowsEffected = preparedStatement.executeUpdate();
 			if(numberOfRowsEffected> 0) {
 				final ResultSet resultet =  preparedStatement.getGeneratedKeys();
-				final Long productId = resultet.getLong("PRODUCT_ID");
+				Long productId =  null;
+				while(resultet.next()) {
+					productId = resultet.getLong(1);
+				}
 				product.setProductId(productId);
 				return product;
 			}

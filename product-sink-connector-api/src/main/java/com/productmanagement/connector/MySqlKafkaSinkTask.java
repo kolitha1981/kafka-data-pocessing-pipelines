@@ -43,7 +43,7 @@ public class MySqlKafkaSinkTask extends SinkTask{
 		final JDBCDataSourceConfig dataSourceConfig =  new JDBCDataSourceConfig(connectorConfig);
 		final JDBCConnectionService connectionService =  new JDBCConnectionServiceImpl(dataSourceConfig);
 		final ProductService productService =  new ProductServiceImpl(connectionService);
-		this.serviceFactory.registerService(productService);
+		this.serviceFactory.registerService(ProductService.class, productService);
 		
 	}
 
